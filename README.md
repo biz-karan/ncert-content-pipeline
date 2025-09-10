@@ -43,15 +43,16 @@ To run the scraper on your local machine:
     ```
 
 2.  **Install dependencies:**
+    First, ensure you have [Poetry](https://python-poetry.org/docs/#installation) installed. Then, run:
     ```bash
-    pip install -r requirements.txt
+    poetry install
     ```
-    *Note: This will install Selenium, which requires a compatible WebDriver (e.g., chromedriver) for your browser.*
+    *Note: This will install Selenium and other dependencies into a virtual environment managed by Poetry. It also requires a compatible WebDriver (e.g., chromedriver) for your browser.*
 
 3.  **Run the script:**
-    To scrape all books for Class 1, for example:
+    To scrape all books for Class 1, for example, run the script within the Poetry environment:
     ```bash
-    python scraper.py --class 1
+    poetry run python scraper.py --class 1
     ```
 
 ## Use Cases
