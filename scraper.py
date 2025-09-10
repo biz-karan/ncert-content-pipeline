@@ -62,10 +62,10 @@ def main():
         select_class.select_by_visible_text(class_name)
         wait.until(EC.presence_of_element_located((By.XPATH, "//select[@name='tsubject']/option[2]")))
 
-        # Get subject options
+        # Get subject options, skipping the placeholder
         select_subject_element = driver.find_element(By.NAME, 'tsubject')
         select_subject = Select(select_subject_element)
-        subject_options = [opt.text for opt in select_subject.options if opt.get_attribute('value')]
+        subject_options = [opt.text for opt in select_subject.options[1:]]
 
         for subject_name in subject_options:
             select_subject.select_by_visible_text(subject_name)
@@ -73,7 +73,7 @@ def main():
 
             select_book_element = driver.find_element(By.NAME, 'tbook')
             select_book = Select(select_book_element)
-            book_options = [opt.text for opt in select_book.options if opt.get_attribute('value')]
+            book_options = [opt.text for opt in select_book.options[1:]]
 
             for book_title in book_options:
                 books_to_process.append({'subject': subject_name, 'title': book_title})
