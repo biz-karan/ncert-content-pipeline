@@ -49,10 +49,16 @@ To run the scraper on your local machine:
     ```
     *Note: This will install Selenium and other dependencies into a virtual environment managed by Poetry. It also requires a compatible WebDriver (e.g., chromedriver) for your browser.*
 
-3.  **Run the script:**
-    To scrape all books for Class 1, for example, run the script within the Poetry environment:
+3.  **Activate the virtual environment:**
+    To activate the virtual environment managed by Poetry, run:
     ```bash
-    poetry run python scraper.py --class 1
+    poetry shell
+    ```
+
+4.  **Run the script:**
+    Once the shell is activated, you can run the script directly:
+    ```bash
+    python scraper.py --class 1
     ```
 
 ## Use Cases
