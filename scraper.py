@@ -9,6 +9,7 @@ import hashlib
 import re
 import requests
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -50,7 +51,7 @@ def main():
 
     try:
         books_to_process = []
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 20)
 
         # --- Step 1: Gather all book combinations ---
         print("Gathering book information...")
@@ -102,34 +103,39 @@ def main():
             select_book_element = driver.find_element(By.NAME, 'tbook')
             Select(select_book_element).select_by_visible_text(book_title)
 
-            driver.find_element(By.NAME, 'button').click()
-            wait.until(EC.presence_of_element_located((By.PARTIAL_LINK_TEXT, 'Download complete book')))
+            try:
+                driver.find_element(By.NAME, 'button').click()
+                wait.until(EC.presence_of_element_located((By.PARTIAL_LINK_TEXT, 'Download complete book')))
 
-            # --- Download and Process Logic ---
-            page_source = driver.page_source
-            soup = BeautifulSoup(page_source, 'html.parser')
-            download_link_tag = soup.find('a', string=re.compile('Download complete book'))
+                # --- Download and Process Logic ---
+                page_source = driver.page_source
+                soup = BeautifulSoup(page_source, 'html.parser')
+                download_link_tag = soup.find('a', string=re.compile('Download complete book'))
 
-            if not download_link_tag:
-                print(f"  > Could not find download link for {book_title}. Skipping.")
+                if not download_link_tag:
+                    print(f"  > WARNING: Found page for '{book_title}' but link vanished. Skipping.")
+                    continue
+
+                relative_url = download_link_tag['href']
+                download_url = f"https://ncert.nic.in/{relative_url}"
+
+                metadata = download_and_extract(download_url, class_number, subject_name, book_title)
+
+                if metadata:
+                    book_entry = {
+                        "id": metadata["id"],
+                        "class": int(class_number),
+                        "subject": subject_name,
+                        "title": book_title,
+                        "pdf_path": metadata["pdf_path"],
+                        "download_url": download_url
+                    }
+                    books_to_track.append(book_entry)
+                    hashes_data[metadata["id"]] = metadata["sha256"]
+
+            except TimeoutException:
+                print(f"  > WARNING: Could not find 'Download complete book' link for '{book_title}'. It may not exist. Skipping.")
                 continue
-
-            relative_url = download_link_tag['href']
-            download_url = f"https://ncert.nic.in/{relative_url}"
-
-            metadata = download_and_extract(download_url, class_number, subject_name, book_title)
-
-            if metadata:
-                book_entry = {
-                    "id": metadata["id"],
-                    "class": int(class_number),
-                    "subject": subject_name,
-                    "title": book_title,
-                    "pdf_path": metadata["pdf_path"],
-                    "download_url": download_url
-                }
-                books_to_track.append(book_entry)
-                hashes_data[metadata["id"]] = metadata["sha256"]
 
         # --- Step 3: Write Manifest Files ---
         write_manifests(books_to_track, hashes_data)
