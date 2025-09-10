@@ -7,6 +7,7 @@ import argparse
 import json
 import hashlib
 import re
+import random
 import requests
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -62,10 +63,10 @@ def main():
         select_class.select_by_visible_text(class_name)
         wait.until(EC.presence_of_element_located((By.XPATH, "//select[@name='tsubject']/option[2]")))
 
-        # Get subject options, skipping the placeholder
+        # Get subject options, skipping placeholders and empty options
         select_subject_element = driver.find_element(By.NAME, 'tsubject')
         select_subject = Select(select_subject_element)
-        subject_options = [opt.text for opt in select_subject.options[1:]]
+        subject_options = [opt.text for opt in select_subject.options[1:] if opt.text.strip()]
 
         for subject_name in subject_options:
             select_subject.select_by_visible_text(subject_name)
@@ -73,7 +74,7 @@ def main():
 
             select_book_element = driver.find_element(By.NAME, 'tbook')
             select_book = Select(select_book_element)
-            book_options = [opt.text for opt in select_book.options[1:]]
+            book_options = [opt.text for opt in select_book.options[1:] if opt.text.strip()]
 
             for book_title in book_options:
                 books_to_process.append({'subject': subject_name, 'title': book_title})
@@ -136,6 +137,11 @@ def main():
             except TimeoutException:
                 print(f"  > WARNING: Could not find 'Download complete book' link for '{book_title}'. It may not exist. Skipping.")
                 continue
+
+            # Add a polite delay to avoid overwhelming the server
+            sleep_time = random.uniform(2, 5)
+            print(f"  > Sleeping for {sleep_time:.2f} seconds...")
+            time.sleep(sleep_time)
 
         # --- Step 3: Write Manifest Files ---
         write_manifests(books_to_track, hashes_data)
